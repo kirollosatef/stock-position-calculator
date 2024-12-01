@@ -2,118 +2,178 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Stock Position Calculator</title>
+    <title>Position Size Calculator</title>
     <style>
       body {
         font-family: Arial, sans-serif;
-        max-width: 600px;
+        max-width: 800px;
         margin: 20px auto;
         padding: 20px;
         background-color: #f5f5f5;
       }
       .calculator {
         background-color: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
       }
       .input-group {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
       }
       label {
         display: block;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
         font-weight: bold;
+        color: #333;
       }
       input {
         width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
         box-sizing: border-box;
+        font-size: 16px;
+      }
+      input:focus {
+        border-color: #4caf50;
+        outline: none;
       }
       button {
         background-color: #4caf50;
         color: white;
-        padding: 10px 15px;
+        padding: 15px;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
         width: 100%;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s;
       }
       button:hover {
         background-color: #45a049;
       }
       .result {
-        margin-top: 20px;
-        padding: 15px;
-        background-color: #e8f5e9;
-        border-radius: 4px;
+        margin-top: 25px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-left: 4px solid #4caf50;
+        border-radius: 6px;
         display: none;
       }
       .info {
         font-size: 0.9em;
         color: #666;
-        margin-top: 4px;
+        margin-top: 6px;
+      }
+      .section-title {
+        color: #2e7d32;
+        border-bottom: 2px solid #4caf50;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+      .result-item {
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #fff;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
     </style>
   </head>
   <body>
     <div class="calculator">
-      <h2>Stock Position Calculator</h2>
+      <h2 class="section-title">Position Size Calculator</h2>
+
       <div class="input-group">
-        <label>Maximum Risk Amount (EGP):</label>
-        <input type="number" id="riskAmount" step="0.01" placeholder="Enter amount you're willing to risk" />
-        <div class="info">Enter the maximum amount you're willing to risk in EGP</div>
+        <label>Portfolio Value (EGP):</label>
+        <input type="number" id="portfolioValue" step="0.01" placeholder="Total portfolio value" />
+        <div class="info">Your total portfolio value in Egyptian Pounds</div>
       </div>
+
+      <div class="input-group">
+        <label>Risk Per Trade (%):</label>
+        <input type="number" id="maxRiskPercent" step="0.01" placeholder="Maximum risk percentage" />
+        <div class="info">Maximum percentage of portfolio to risk per trade (e.g., 1 for 1%)</div>
+      </div>
+
       <div class="input-group">
         <label>Entry Price (EGP):</label>
-        <input type="number" id="entryPrice" step="0.01" placeholder="Enter stock entry price" />
-        <div class="info">Current or expected entry price of the stock</div>
+        <input type="number" id="entryPrice" step="0.01" placeholder="Stock entry price" />
+        <div class="info">Stock entry price per share</div>
       </div>
+
       <div class="input-group">
-        <label>Stop Loss Percentage (%):</label>
-        <input type="number" id="stopLossPercent" step="0.01" placeholder="Enter stop loss percentage" />
-        <div class="info">How many percent below entry price to set stop loss (e.g., 2.5 for 2.5%)</div>
+        <label>Stop Loss (%):</label>
+        <input type="number" id="stopLossPercent" step="0.01" placeholder="Stop loss percentage" />
+        <div class="info">Stop loss percentage below entry price</div>
       </div>
+
       <button onclick="calculate()">Calculate Position</button>
       <div id="result" class="result"></div>
     </div>
 
     <script>
       function calculate() {
-        const riskAmount = parseFloat(document.getElementById("riskAmount").value);
+        // Get input values
+        const portfolioValue = parseFloat(document.getElementById("portfolioValue").value);
+        const maxRiskPercent = parseFloat(document.getElementById("maxRiskPercent").value);
         const entryPrice = parseFloat(document.getElementById("entryPrice").value);
         const stopLossPercent = parseFloat(document.getElementById("stopLossPercent").value);
 
-        if (!riskAmount || !entryPrice || !stopLossPercent) {
+        // Validate inputs
+        if (!portfolioValue || !maxRiskPercent || !entryPrice || !stopLossPercent) {
           alert("Please fill in all fields");
           return;
         }
 
-        if (stopLossPercent <= 0) {
-          alert("Stop loss percentage must be greater than 0");
-          return;
-        }
+        // Calculate maximum risk amount from portfolio
+        const maxRiskAmount = portfolioValue * (maxRiskPercent / 100);
 
-        // Calculate stop loss price based on percentage
+        // Calculate stop loss price and risk per share
         const stopLossPrice = entryPrice * (1 - stopLossPercent / 100);
         const riskPerShare = entryPrice - stopLossPrice;
 
-        // Calculate position size
-        const shares = Math.floor(riskAmount / riskPerShare);
-        const totalInvestment = shares * entryPrice;
-        const actualRisk = shares * riskPerShare;
+        // Calculate position size based on risk
+        const maxShares = Math.floor(maxRiskAmount / riskPerShare);
 
+        // Calculate total position value
+        const positionValue = maxShares * entryPrice;
+
+        // Calculate actual values
+        const actualRisk = maxShares * riskPerShare;
+        const positionSizePercent = (positionValue / portfolioValue) * 100;
+        const actualRiskPercent = (actualRisk / portfolioValue) * 100;
+
+        // Display results
         const result = document.getElementById("result");
         result.style.display = "block";
         result.innerHTML = `
-                <h3>Position Details:</h3>
-                <p>Number of shares to buy: ${shares.toFixed(0)}</p>
-                <p>Total investment needed: ${totalInvestment.toFixed(2)} EGP</p>
-                <p>Stop Loss Price: ${stopLossPrice.toFixed(2)} EGP</p>
-                <p>Risk per share: ${riskPerShare.toFixed(2)} EGP</p>
-                <p>Actual risk amount: ${actualRisk.toFixed(2)} EGP</p>
+                <h3 class="section-title">Position Details</h3>
+                
+                <div class="result-item">
+                    <strong>Position Size:</strong><br>
+                    ${positionValue.toLocaleString("en-US", {
+                      maximumFractionDigits: 2,
+                    })} EGP (${positionSizePercent.toFixed(2)}% of portfolio)
+                </div>
+                
+                <div class="result-item">
+                    <strong>Number of Shares:</strong><br>
+                    ${maxShares.toLocaleString("en-US")} shares
+                </div>
+                
+                <div class="result-item">
+                    <strong>Entry Price:</strong> ${entryPrice.toFixed(2)} EGP<br>
+                    <strong>Stop Loss Price:</strong> ${stopLossPrice.toFixed(2)} EGP
+                </div>
+                
+                <div class="result-item">
+                    <strong>Risk Amount:</strong><br>
+                    ${actualRisk.toLocaleString("en-US", {
+                      maximumFractionDigits: 2,
+                    })} EGP (${actualRiskPercent.toFixed(2)}% of portfolio)
+                </div>
             `;
       }
     </script>
